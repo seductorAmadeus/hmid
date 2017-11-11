@@ -1,0 +1,6 @@
+﻿  Source.cpp
+c:\users\admin\desktop\win32project1\win32project1\source.cpp(173): warning C4477: 'printf' : format string '%02d' requires an argument of type 'int', but variadic argument 1 has type 'time_t'
+  c:\users\admin\desktop\win32project1\win32project1\source.cpp(173): note: consider using '%lld' in the format string
+  c:\users\admin\desktop\win32project1\win32project1\source.cpp(173): note: consider using '%I64d' in the format string
+  Win32Project1.vcxproj -> C:\Users\admin\Desktop\Win32Project1\Debug\Win32Project1.exe
+  Win32Project1.vcxproj -> C:\Users\admin\Desktop\Win32Project1\Debug\Win32Project1.pdb (Partial PDB)
