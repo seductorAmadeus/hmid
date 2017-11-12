@@ -1,13 +1,4 @@
 ﻿C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\Common7\IDE\VC\VCTargets\Microsoft.CppBuild.targets(387,5): warning MSB8028: The intermediate directory (Debug\) contains files shared from another project (Win32Project1.vcxproj).  This can lead to incorrect clean and rebuild behavior.
   Source.cpp
-c:\users\admin\desktop\hmid\hmid_l1\win32project1\source.cpp(173): warning C4477: 'printf' : format string '%02d' requires an argument of type 'int', but variadic argument 1 has type 'time_t'
-  c:\users\admin\desktop\hmid\hmid_l1\win32project1\source.cpp(173): note: consider using '%lld' in the format string
-  c:\users\admin\desktop\hmid\hmid_l1\win32project1\source.cpp(173): note: consider using '%I64d' in the format string
-Win32Project1.rc(16): warning RC2182: duplicate dialog control ID 0
-  
-Win32Project1.rc(17): warning RC2182: duplicate dialog control ID 0
-  
-Win32Project1.rc(18): warning RC2182: duplicate dialog control ID 0
-  
   Win32Project1.vcxproj -> C:\Users\admin\Desktop\hmid\hmid_l1\Debug\hmid_l1.exe
   Win32Project1.vcxproj -> C:\Users\admin\Desktop\hmid\hmid_l1\Debug\hmid_l1.pdb (Partial PDB)

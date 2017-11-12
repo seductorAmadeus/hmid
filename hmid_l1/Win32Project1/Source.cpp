@@ -8,7 +8,6 @@
 #define OPEN_ID	1
 #define RUN_BITBLT_ID	2
 #define RUN_SETPIXEL_ID	3
-#define RUN_TESTS_ID	4
 
 LPCTSTR getFileName();
 int saveBitmap(HDC hdc, HBITMAP bm, int width, int height);
@@ -16,7 +15,6 @@ LRESULT CALLBACK handleWindowEvents(HWND, UINT, WPARAM, LPARAM);
 BOOL CALLBACK AboutDlgProc(HWND hDlg, UINT iMsg, WPARAM wParam, LPARAM lParam);
 void setPixelDisplay(HWND hwnd, HBITMAP hBitmap);
 void setBlt(HWND hWnd, HBITMAP hBitmap);
-void runTests(HWND hwnd);
 
 bool isLoaded = false;
 HBITMAP hBitmap;
@@ -57,7 +55,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdPa
 	HMENU MainMenu = CreateMenu();
 	AppendMenu(MainMenu, MF_STRING, OPEN_ID, L"Open");
 	AppendMenu(MainMenu, MF_STRING, RUN_BITBLT_ID, L"Change");
-	AppendMenu(MainMenu, MF_STRING, RUN_TESTS_ID, L"Run tests");
 	AppendMenu(MainMenu, MF_STRING, RUN_SETPIXEL_ID, L"GetPixel");
 	AppendMenu(MainMenu, MF_STRING, IDM_ABOUT, L"About");
 
@@ -133,11 +130,6 @@ LRESULT CALLBACK handleWindowEvents(HWND hwnd, UINT message, WPARAM wParam, LPAR
 					InvalidateRect(hwnd, NULL, TRUE);
 					isLoaded = true;
 				}
-				if (LOWORD(wParam) == RUN_TESTS_ID)
-				{
-					runTests(hwnd);
-					break;
-				}
 				if (LOWORD(wParam) == RUN_BITBLT_ID)
 				{
 					if (!isLoaded)
@@ -147,55 +139,13 @@ LRESULT CALLBACK handleWindowEvents(HWND hwnd, UINT message, WPARAM wParam, LPAR
 					setBlt(hwnd, hBitmap);
 				}
 				break;
-				if (LOWORD(wParam) == RUN_SETPIXEL_ID)
-				{
-					if (!isLoaded)
-					{
-						break;
-					}
-					setPixelDisplay(hwnd, hBitmap);
-				}
-				break;
-
 			}
 		default:
 			{
 				return DefWindowProc(hwnd, message, wParam, lParam);
-				break;
 			}
 	}
 	return 0;
-}
-
-void runTests(HWND hwnd)
-{
-	HBITMAP cpy;
-	time_t start_time;
-	time_t stats[20];
-	for (int type = 0; type < 2; type++)
-	{
-		printf(type ? "pixel:  " : "bitblt: ");
-		for (int i = 1; i <= 10; i++)
-		{
-			cpy = (HBITMAP)CopyImage(hBitmap, IMAGE_BITMAP, i * 100, i * 100, 0);
-			start_time = time(NULL);
-			switch (type)
-			{
-				case 0:
-					setBlt(hwnd, cpy);
-					break;
-				case 1:
-					setPixelDisplay(hwnd, cpy);
-					break;
-			}
-			stats[type * 10 + (i - 1)] = time(NULL) - start_time;
-
-
-			printf("%02d\t", stats[type * 10 + (i - 1)]);
-			DeleteObject(cpy);
-		}
-		printf("\n");
-	}
 }
 
 BOOL CALLBACK AboutDlgProc(HWND hDlg, UINT iMsg, WPARAM wParam, LPARAM lParam)
