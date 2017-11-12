@@ -1,4 +1,4 @@
-﻿#include<windows.h>
+﻿#include <windows.h>
 #include <time.h>
 #include <stdio.h>
 #include <iostream> 
@@ -15,6 +15,9 @@ LRESULT CALLBACK handleWindowEvents(HWND, UINT, WPARAM, LPARAM);
 BOOL CALLBACK AboutDlgProc(HWND hDlg, UINT iMsg, WPARAM wParam, LPARAM lParam);
 void setPixelDisplay(HWND hwnd, HBITMAP hBitmap);
 void setBlt(HWND hWnd, HBITMAP hBitmap);
+int runBitBltFilter(HWND hWnd, HBITMAP hBitmap);
+void runSetPixelFilter(HWND hwnd, HBITMAP hBitmap);
+
 
 bool isLoaded = false;
 HBITMAP hBitmap;
@@ -55,7 +58,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdPa
 	HMENU MainMenu = CreateMenu();
 	AppendMenu(MainMenu, MF_STRING, OPEN_ID, L"Open");
 	AppendMenu(MainMenu, MF_STRING, RUN_BITBLT_ID, L"Change");
-	AppendMenu(MainMenu, MF_STRING, RUN_SETPIXEL_ID, L"GetPixel");
+	AppendMenu(MainMenu, MF_STRING, RUN_SETPIXEL_ID, L"SetPixel");
 	AppendMenu(MainMenu, MF_STRING, IDM_ABOUT, L"About");
 
 	SetMenu(hWnd, MainMenu);
@@ -130,14 +133,29 @@ LRESULT CALLBACK handleWindowEvents(HWND hwnd, UINT message, WPARAM wParam, LPAR
 					InvalidateRect(hwnd, NULL, TRUE);
 					isLoaded = true;
 				}
+
 				if (LOWORD(wParam) == RUN_BITBLT_ID)
 				{
 					if (!isLoaded)
 					{
 						break;
 					}
-					setBlt(hwnd, hBitmap);
+					if (runBitBltFilter(hwnd, hBitmap) == 1) // if error
+					{
+						break;
+					}
+					//setBlt(hwnd, hBitmap);
 				}
+
+				if (LOWORD(wParam) == RUN_SETPIXEL_ID)
+				{
+					if (!isLoaded)
+					{
+						break;
+					}
+					runSetPixelFilter(hwnd, hBitmap);
+				}
+
 				break;
 			}
 		default:
@@ -182,52 +200,42 @@ BOOL CALLBACK AboutDlgProc(HWND hDlg, UINT iMsg, WPARAM wParam, LPARAM lParam)
 	}
 	return FALSE;
 }
-
-void setBlt(HWND hwnd, HBITMAP hBitmap)
+int runBitBltFilter(HWND hWnd, HBITMAP hBitmap)
 {
-	BITMAP bm;
-	HDC hCompatibleDC = CreateCompatibleDC(NULL);
-	HBITMAP hOldBitmap = (HBITMAP)SelectObject(hCompatibleDC, hBitmap);
 
-	GetObject(hBitmap, sizeof(bm), &bm);
-
-	SelectObject(hCompatibleDC, GetStockObject(DC_BRUSH));
-	SetDCBrushColor(hCompatibleDC, RGB(255, 0, 0));
-
-	BitBlt(hCompatibleDC, 0, 0, bm.bmWidth, bm.bmHeight, hCompatibleDC, 0, 0, MERGECOPY);
-	saveBitmap(hCompatibleDC, hBitmap, bm.bmWidth, bm.bmHeight);
-
-	InvalidateRect(hwnd, NULL, TRUE);
-
-	SelectObject(hCompatibleDC, hOldBitmap);
-	DeleteDC(hCompatibleDC);
+	BITMAP bitmap;
+	HDC hCompatibleDC = CreateCompatibleDC(NULL); /* Create Device_Context compatible with current window */
+	SelectObject(hCompatibleDC, hBitmap); /* Select hBitmap in hCompatibleDC context */
+	GetObject(hBitmap, sizeof(bitmap), &bitmap); /* Get BITMAP size */
+	SelectObject(hCompatibleDC, GetStockObject(DC_BRUSH)); /* Select DC_BRUSH in hCompatibleDC context */
+	SetDCBrushColor(hCompatibleDC, RGB(255, 0, 255)); /* Set in current brush context color(255,0,255) */
+	if (!BitBlt(hCompatibleDC, 0, 0, bitmap.bmWidth, bitmap.bmHeight, hCompatibleDC, 0, 0, MERGECOPY))
+	{
+		return 1;
+	}
+	saveBitmap(hCompatibleDC, hBitmap, bitmap.bmWidth, bitmap.bmHeight);
+	InvalidateRect(hWnd, NULL, TRUE); /* Set rectangle for redraw window */
+	DeleteDC(hCompatibleDC); /* Delete compatible contex */
+	return 0;
 }
 
-void setPixelDisplay(HWND hwnd, HBITMAP hBitmap)
+void runSetPixelFilter(HWND hwnd, HBITMAP hBitmap)
 {
-	BITMAP bm;
-	GetObject(hBitmap, sizeof(bm), &bm);
 
+	BITMAP bitmap;
+	GetObject(hBitmap, sizeof(bitmap), &bitmap);
 	HDC hCompatibleDC = CreateCompatibleDC(NULL);
-	HBITMAP hOldBitmap = (HBITMAP)SelectObject(hCompatibleDC, hBitmap);
-
-
-	for (int i = 0; i < bm.bmWidth; i++)
+	SelectObject(hCompatibleDC, hBitmap);
+	for (int i = 0; i < bitmap.bmWidth; i++)
 	{
-		for (int j = 0; j < bm.bmHeight; j++)
+		for (int j = 0; j < bitmap.bmHeight; j++)
 		{
-			//COLORREF clr = GetPixel(hCompatibleDC, i, j);
-			//SetPixel(hCompatibleDC, i, j, RGB(GetRValue(clr), 0, 0));
-			SetPixel(hCompatibleDC, i, j,
-					 GetPixel(hCompatibleDC, i, j) | 0x00FF00);
+			SetPixel(hCompatibleDC, i, j, GetPixel(hCompatibleDC, i, j) & 0xFF00FF);
 		}
 	}
-
-	SelectObject(hCompatibleDC, hOldBitmap);
-	saveBitmap(hCompatibleDC, hBitmap, bm.bmWidth, bm.bmHeight);
+	saveBitmap(hCompatibleDC, hBitmap, bitmap.bmWidth, bitmap.bmHeight);
 	InvalidateRect(hwnd, NULL, TRUE);
 	DeleteDC(hCompatibleDC);
-	DeleteObject(hOldBitmap);
 }
 
 LPCTSTR getFileName()
@@ -278,7 +286,7 @@ int saveBitmap(HDC hdc, HBITMAP H, int width, int height)
 			  lpbitmap,
 			  (BITMAPINFO *)&bi, DIB_RGB_COLORS);
 
-	HANDLE hFile = CreateFile(L"C:/Users/admin/Desktop/mmi/Lab1_MNI/Debug/result5551.bmp",
+	HANDLE hFile = CreateFile(L"C:/Users/admin/Desktop/tphoto/result.bmp",
 							  GENERIC_WRITE,
 							  0,
 							  NULL,
