@@ -21,7 +21,8 @@ void runTests(HWND hwnd);
 bool isLoaded = false;
 HBITMAP hBitmap;
 
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdParam, int nCmdShow) {
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdParam, int nCmdShow)
+{
 	HWND hWnd;
 	WNDCLASS WndClass;
 	MSG Msg;
@@ -40,17 +41,18 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdPa
 	WndClass.lpszClassName = szClassName;
 
 	// Register window class
-	if (!RegisterClass(&WndClass)) {
+	if (!RegisterClass(&WndClass))
+	{
 		MessageBox(NULL, L"Cannot register class", L"Error", MB_OK);
 		return 0;
 	}
 
 	// Create window
 	hWnd = CreateWindow(szClassName, L"Лабораторная работа №1",
-		WS_OVERLAPPEDWINDOW, CW_USEDEFAULT,
-		CW_USEDEFAULT, CW_USEDEFAULT,
-		CW_USEDEFAULT, NULL, NULL,
-		hInstance, NULL);
+						WS_OVERLAPPEDWINDOW, CW_USEDEFAULT,
+						CW_USEDEFAULT, CW_USEDEFAULT,
+						CW_USEDEFAULT, NULL, NULL,
+						hInstance, NULL);
 
 	HMENU MainMenu = CreateMenu();
 	AppendMenu(MainMenu, MF_STRING, OPEN_ID, L"Open");
@@ -61,7 +63,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdPa
 
 	SetMenu(hWnd, MainMenu);
 
-	if (!hWnd) {
+	if (!hWnd)
+	{
 		MessageBox(NULL, L"Cannot create window", L"Error", MB_OK);
 		return 0;
 	}
@@ -69,7 +72,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdPa
 	// Show window, start handling his messages
 	ShowWindow(hWnd, SW_SHOWDEFAULT);
 	UpdateWindow(hWnd);
-	while (GetMessage(&Msg, NULL, 0, 0)) {
+	while (GetMessage(&Msg, NULL, 0, 0))
+	{
 		TranslateMessage(&Msg);
 		DispatchMessage(&Msg);
 	}
@@ -77,95 +81,112 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdPa
 	return Msg.wParam;
 }
 
-LRESULT CALLBACK handleWindowEvents(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
+LRESULT CALLBACK handleWindowEvents(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
 	static HINSTANCE hInstance;
 
-	switch (message) {
-
-	case WM_CREATE: {
-		hInstance = ((LPCREATESTRUCT)lParam)->hInstance;
-		return 0;
-	}
-
-	case WM_DESTROY: {
-		PostQuitMessage(0);
-		break;
-	}
-
-	case WM_PAINT: {
-		BITMAP bm;
-		PAINTSTRUCT ps;
-		HDC hDC = BeginPaint(hwnd, &ps);
-
-		HDC hCompatibleDC = CreateCompatibleDC(hDC);
-		HBITMAP hOldBitmap = (HBITMAP)SelectObject(hCompatibleDC, hBitmap);
-		GetObject(hBitmap, sizeof(bm), &bm);
-		BitBlt(hDC, 0, 0, bm.bmWidth, bm.bmHeight, hCompatibleDC, 0, 0, SRCCOPY);
-		SelectObject(hCompatibleDC, hOldBitmap);
-		DeleteDC(hCompatibleDC);
-
-		EndPaint(hwnd, &ps);
-		break;
-	}
-
-	case WM_COMMAND:
+	switch (message)
 	{
 
-		if (LOWORD(wParam) == IDM_ABOUT) {
-			DialogBox(hInstance, L"AboutBox", hwnd, AboutDlgProc);
-			return 0;
-		}
+		case WM_CREATE:
+			{
+				hInstance = ((LPCREATESTRUCT)lParam)->hInstance;
+				return 0;
+			}
 
-		if (LOWORD(wParam) == OPEN_ID) {
-			LPCTSTR fileName = getFileName();
-			hBitmap = (HBITMAP)LoadImage(0, fileName, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
-			InvalidateRect(hwnd, NULL, TRUE);
-			isLoaded = true;
-		}
-		if (LOWORD(wParam) == RUN_TESTS_ID) {
-			runTests(hwnd);
-			break;
-		}
-		if (LOWORD(wParam) == RUN_BITBLT_ID) { 
-			if (!isLoaded) {
+		case WM_DESTROY:
+			{
+				PostQuitMessage(0);
 				break;
 			}
-			setBlt(hwnd, hBitmap);
-		}
-		break;
-		if (LOWORD(wParam) == RUN_SETPIXEL_ID) {
-			if (!isLoaded) {
+
+		case WM_PAINT:
+			{
+				BITMAP bm;
+				PAINTSTRUCT ps;
+				HDC hDC = BeginPaint(hwnd, &ps);
+
+				HDC hCompatibleDC = CreateCompatibleDC(hDC);
+				HBITMAP hOldBitmap = (HBITMAP)SelectObject(hCompatibleDC, hBitmap);
+				GetObject(hBitmap, sizeof(bm), &bm);
+				BitBlt(hDC, 0, 0, bm.bmWidth, bm.bmHeight, hCompatibleDC, 0, 0, SRCCOPY);
+				SelectObject(hCompatibleDC, hOldBitmap);
+				DeleteDC(hCompatibleDC);
+
+				EndPaint(hwnd, &ps);
 				break;
 			}
-			setPixelDisplay(hwnd, hBitmap);
-		}
-		break;
 
-	}
-	default: {
-		return DefWindowProc(hwnd, message, wParam, lParam);
-		break;
-	}
+		case WM_COMMAND:
+			{
+
+				if (LOWORD(wParam) == IDM_ABOUT)
+				{
+					DialogBox(hInstance, L"AboutBox", hwnd, AboutDlgProc);
+					return 0;
+				}
+
+				if (LOWORD(wParam) == OPEN_ID)
+				{
+					LPCTSTR fileName = getFileName();
+					hBitmap = (HBITMAP)LoadImage(0, fileName, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+					InvalidateRect(hwnd, NULL, TRUE);
+					isLoaded = true;
+				}
+				if (LOWORD(wParam) == RUN_TESTS_ID)
+				{
+					runTests(hwnd);
+					break;
+				}
+				if (LOWORD(wParam) == RUN_BITBLT_ID)
+				{
+					if (!isLoaded)
+					{
+						break;
+					}
+					setBlt(hwnd, hBitmap);
+				}
+				break;
+				if (LOWORD(wParam) == RUN_SETPIXEL_ID)
+				{
+					if (!isLoaded)
+					{
+						break;
+					}
+					setPixelDisplay(hwnd, hBitmap);
+				}
+				break;
+
+			}
+		default:
+			{
+				return DefWindowProc(hwnd, message, wParam, lParam);
+				break;
+			}
 	}
 	return 0;
 }
 
-void runTests(HWND hwnd) {
+void runTests(HWND hwnd)
+{
 	HBITMAP cpy;
 	time_t start_time;
 	time_t stats[20];
-	for (int type = 0; type < 2; type++) {
+	for (int type = 0; type < 2; type++)
+	{
 		printf(type ? "pixel:  " : "bitblt: ");
-		for (int i = 1; i <= 10; i++) {
+		for (int i = 1; i <= 10; i++)
+		{
 			cpy = (HBITMAP)CopyImage(hBitmap, IMAGE_BITMAP, i * 100, i * 100, 0);
 			start_time = time(NULL);
-			switch (type) {
-			case 0:
-				setBlt(hwnd, cpy);
-				break;
-			case 1:
-				setPixelDisplay(hwnd, cpy);
-				break;
+			switch (type)
+			{
+				case 0:
+					setBlt(hwnd, cpy);
+					break;
+				case 1:
+					setPixelDisplay(hwnd, cpy);
+					break;
 			}
 			stats[type * 10 + (i - 1)] = time(NULL) - start_time;
 
@@ -181,37 +202,39 @@ BOOL CALLBACK AboutDlgProc(HWND hDlg, UINT iMsg, WPARAM wParam, LPARAM lParam)
 {
 	switch (iMsg)
 	{
-	case WM_INITDIALOG:
-		return TRUE;
-	case WM_PAINT: {
-		BITMAP bm;
-		PAINTSTRUCT ps;
-		HDC hDC = BeginPaint(hDlg, &ps);
-
-		HDC hCompatibleDC = CreateCompatibleDC(hDC);
-		HBITMAP hOldBitmap = (HBITMAP)SelectObject(hCompatibleDC, hBitmap);
-		GetObject(hBitmap, sizeof(bm), &bm);
-		BitBlt(hDC, 0, 0, bm.bmWidth, bm.bmHeight, hCompatibleDC, 0, 0, SRCCOPY);
-		SelectObject(hCompatibleDC, hOldBitmap);
-		DeleteDC(hCompatibleDC);
-
-		EndPaint(hDlg, &ps);
-		break;
-	}
-	case WM_COMMAND:
-		switch (LOWORD(wParam))
-		{
-		case IDOK:
-		case IDCANCEL:
-			EndDialog(hDlg, 0);
+		case WM_INITDIALOG:
 			return TRUE;
-		}
-		break;
+		case WM_PAINT:
+			{
+				BITMAP bm;
+				PAINTSTRUCT ps;
+				HDC hDC = BeginPaint(hDlg, &ps);
+
+				HDC hCompatibleDC = CreateCompatibleDC(hDC);
+				HBITMAP hOldBitmap = (HBITMAP)SelectObject(hCompatibleDC, hBitmap);
+				GetObject(hBitmap, sizeof(bm), &bm);
+				BitBlt(hDC, 0, 0, bm.bmWidth, bm.bmHeight, hCompatibleDC, 0, 0, SRCCOPY);
+				SelectObject(hCompatibleDC, hOldBitmap);
+				DeleteDC(hCompatibleDC);
+
+				EndPaint(hDlg, &ps);
+				break;
+			}
+		case WM_COMMAND:
+			switch (LOWORD(wParam))
+			{
+				case IDOK:
+				case IDCANCEL:
+					EndDialog(hDlg, 0);
+					return TRUE;
+			}
+			break;
 	}
 	return FALSE;
 }
 
-void setBlt(HWND hwnd, HBITMAP hBitmap) {
+void setBlt(HWND hwnd, HBITMAP hBitmap)
+{
 	BITMAP bm;
 	HDC hCompatibleDC = CreateCompatibleDC(NULL);
 	HBITMAP hOldBitmap = (HBITMAP)SelectObject(hCompatibleDC, hBitmap);
@@ -230,20 +253,23 @@ void setBlt(HWND hwnd, HBITMAP hBitmap) {
 	DeleteDC(hCompatibleDC);
 }
 
-void setPixelDisplay(HWND hwnd, HBITMAP hBitmap) {
+void setPixelDisplay(HWND hwnd, HBITMAP hBitmap)
+{
 	BITMAP bm;
 	GetObject(hBitmap, sizeof(bm), &bm);
 
-	HDC hCompatibleDC = CreateCompatibleDC(NULL); 
-	HBITMAP hOldBitmap = (HBITMAP)SelectObject(hCompatibleDC, hBitmap); 
+	HDC hCompatibleDC = CreateCompatibleDC(NULL);
+	HBITMAP hOldBitmap = (HBITMAP)SelectObject(hCompatibleDC, hBitmap);
 
 
-	for (int i = 0; i < bm.bmWidth; i++) {
-		for (int j = 0; j < bm.bmHeight; j++) {
+	for (int i = 0; i < bm.bmWidth; i++)
+	{
+		for (int j = 0; j < bm.bmHeight; j++)
+		{
 			//COLORREF clr = GetPixel(hCompatibleDC, i, j);
 			//SetPixel(hCompatibleDC, i, j, RGB(GetRValue(clr), 0, 0));
 			SetPixel(hCompatibleDC, i, j,
-				GetPixel(hCompatibleDC, i, j) | 0x00FF00);
+					 GetPixel(hCompatibleDC, i, j) | 0x00FF00);
 		}
 	}
 
@@ -254,7 +280,8 @@ void setPixelDisplay(HWND hwnd, HBITMAP hBitmap) {
 	DeleteObject(hOldBitmap);
 }
 
-LPCTSTR getFileName() {
+LPCTSTR getFileName()
+{
 	OPENFILENAME ofn;
 
 	ZeroMemory(&ofn, sizeof(ofn));
@@ -274,7 +301,8 @@ LPCTSTR getFileName() {
 	return ofn.lpstrFile;
 }
 
-int saveBitmap(HDC hdc, HBITMAP H, int width, int height) {
+int saveBitmap(HDC hdc, HBITMAP H, int width, int height)
+{
 	BITMAPFILEHEADER   bmfHeader;
 	BITMAPINFOHEADER   bi;
 
@@ -297,15 +325,15 @@ int saveBitmap(HDC hdc, HBITMAP H, int width, int height) {
 
 	GetDIBits(hdc, H, 0,
 		(UINT)height,
-		lpbitmap,
-		(BITMAPINFO *)&bi, DIB_RGB_COLORS);
+			  lpbitmap,
+			  (BITMAPINFO *)&bi, DIB_RGB_COLORS);
 
 	HANDLE hFile = CreateFile(L"C:/Users/admin/Desktop/mmi/Lab1_MNI/Debug/result5551.bmp",
-		GENERIC_WRITE,
-		0,
-		NULL,
-		CREATE_ALWAYS,
-		FILE_ATTRIBUTE_NORMAL, NULL);
+							  GENERIC_WRITE,
+							  0,
+							  NULL,
+							  CREATE_ALWAYS,
+							  FILE_ATTRIBUTE_NORMAL, NULL);
 
 	DWORD dwSizeofDIB = dwBmpSize + sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER);
 
