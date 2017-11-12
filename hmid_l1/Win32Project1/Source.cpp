@@ -4,10 +4,16 @@
 #include <iostream> 
 #include <fstream>
 #include "resource.h"
+#include <Commdlg.h>
+#include <io.h>
+#include <fcntl.h>
+#include <winuser.h>
+#include <debugapi.h>
 
 #define OPEN_ID	1
 #define RUN_BITBLT_ID	2
 #define RUN_SETPIXEL_ID	3
+#define RUN_TESTS_ID 4
 
 LPCTSTR getFileName();
 int saveBitmap(HDC hdc, HBITMAP bm, int width, int height);
@@ -15,6 +21,7 @@ LRESULT CALLBACK handleWindowEvents(HWND, UINT, WPARAM, LPARAM);
 BOOL CALLBACK AboutDlgProc(HWND hDlg, UINT iMsg, WPARAM wParam, LPARAM lParam);
 int runBitBltFilter(HWND hWnd, HBITMAP hBitmap);
 void runSetPixelFilter(HWND hwnd, HBITMAP hBitmap);
+void runTests(HWND hwnd);
 
 bool isLoaded = false;
 HBITMAP hBitmap;
@@ -56,6 +63,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdPa
 	AppendMenu(MainMenu, MF_STRING, OPEN_ID, L"Open");
 	AppendMenu(MainMenu, MF_STRING, RUN_BITBLT_ID, L"Change");
 	AppendMenu(MainMenu, MF_STRING, RUN_SETPIXEL_ID, L"SetPixel");
+	AppendMenu(MainMenu, MF_STRING, RUN_TESTS_ID, L"Tests");
 	AppendMenu(MainMenu, MF_STRING, IDM_ABOUT, L"About");
 
 	SetMenu(hWnd, MainMenu);
@@ -141,7 +149,6 @@ LRESULT CALLBACK handleWindowEvents(HWND hwnd, UINT message, WPARAM wParam, LPAR
 					{
 						break;
 					}
-					//setBlt(hwnd, hBitmap);
 				}
 
 				if (LOWORD(wParam) == RUN_SETPIXEL_ID)
@@ -151,6 +158,11 @@ LRESULT CALLBACK handleWindowEvents(HWND hwnd, UINT message, WPARAM wParam, LPAR
 						break;
 					}
 					runSetPixelFilter(hwnd, hBitmap);
+				}
+
+				if (LOWORD(wParam) == RUN_TESTS_ID)
+				{
+					runTests(hwnd);
 				}
 
 				break;
@@ -309,4 +321,59 @@ int saveBitmap(HDC hdc, HBITMAP H, int width, int height)
 	CloseHandle(hFile);
 
 	return 0;
+}
+
+void runTests(HWND hwnd)
+{
+	HBITMAP cpy;
+
+	DWORD dwStartTime;
+	DWORD dwElapsed;
+
+	// open console
+	AllocConsole();
+	HANDLE stdHandle;
+	int hConsole;
+	FILE* fp;
+	stdHandle = GetStdHandle(STD_OUTPUT_HANDLE);
+	hConsole = _open_osfhandle((long)stdHandle, _O_TEXT);
+	fp = _fdopen(hConsole, "w");
+	freopen_s(&fp, "CONOUT$", "w", stdout);
+
+	// measure BitBlt
+	printf("BitBlt: \n");
+	for (int i = 1; i <= 10; i++)
+	{
+		cpy = (HBITMAP)CopyImage(hBitmap, IMAGE_BITMAP, i * 200, i * 200, 0);
+
+
+		dwStartTime = GetTickCount();
+
+		runBitBltFilter(hwnd, cpy);
+
+		dwElapsed = GetTickCount() - dwStartTime;
+		printf("[%4d x %4d] = %d.%d sec.\n", (i * 200), (i * 200), dwElapsed / 1000, dwElapsed - dwElapsed / 1000);
+
+		DeleteObject(cpy);
+	}
+	printf("\n");
+
+
+	// measure SetPixel/GetPixel
+	printf("Pixel: \n");
+	for (int i = 1; i <= 10; i++)
+	{
+		cpy = (HBITMAP)CopyImage(hBitmap, IMAGE_BITMAP, i * 200, i * 200, 0);
+
+
+		dwStartTime = GetTickCount();
+
+		runSetPixelFilter(hwnd, cpy);
+
+		dwElapsed = GetTickCount() - dwStartTime;
+		printf("[%4d x %4d] = %d.%d sec.\n", (i * 200), (i * 200), dwElapsed / 1000, dwElapsed - dwElapsed / 1000);
+
+		DeleteObject(cpy);
+	}
+	printf("\nDone!");
 }
