@@ -13,11 +13,8 @@ LPCTSTR getFileName();
 int saveBitmap(HDC hdc, HBITMAP bm, int width, int height);
 LRESULT CALLBACK handleWindowEvents(HWND, UINT, WPARAM, LPARAM);
 BOOL CALLBACK AboutDlgProc(HWND hDlg, UINT iMsg, WPARAM wParam, LPARAM lParam);
-void setPixelDisplay(HWND hwnd, HBITMAP hBitmap);
-void setBlt(HWND hWnd, HBITMAP hBitmap);
 int runBitBltFilter(HWND hWnd, HBITMAP hBitmap);
 void runSetPixelFilter(HWND hwnd, HBITMAP hBitmap);
-
 
 bool isLoaded = false;
 HBITMAP hBitmap;
