@@ -10,21 +10,6 @@
 #include <winuser.h>
 #include <debugapi.h>
 
-#define OPEN_ID	1
-#define RUN_BITBLT_ID	2
-#define RUN_SETPIXEL_ID	3
-#define RUN_TESTS_ID 4
-
-LPCTSTR getFileName();
-int saveBitmap(HDC hdc, HBITMAP bm, int width, int height);
-LRESULT CALLBACK handleWindowEvents(HWND, UINT, WPARAM, LPARAM);
-BOOL CALLBACK AboutDlgProc(HWND hDlg, UINT iMsg, WPARAM wParam, LPARAM lParam);
-int runBitBltFilter(HWND hWnd, HBITMAP hBitmap);
-void runSetPixelFilter(HWND hwnd, HBITMAP hBitmap);
-void runTests(HWND hwnd);
-
-bool isLoaded = false;
-HBITMAP hBitmap;
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdParam, int nCmdShow)
 {
@@ -213,18 +198,18 @@ int runBitBltFilter(HWND hWnd, HBITMAP hBitmap)
 {
 
 	BITMAP bitmap;
-	HDC hCompatibleDC = CreateCompatibleDC(NULL); /* Create Device_Context compatible with current window */
-	SelectObject(hCompatibleDC, hBitmap); /* Select hBitmap in hCompatibleDC context */
-	GetObject(hBitmap, sizeof(bitmap), &bitmap); /* Get BITMAP size */
-	SelectObject(hCompatibleDC, GetStockObject(DC_BRUSH)); /* Select DC_BRUSH in hCompatibleDC context */
-	SetDCBrushColor(hCompatibleDC, RGB(255, 0, 255)); /* Set in current brush context color(255,0,255) */
+	HDC hCompatibleDC = CreateCompatibleDC(NULL); 
+	SelectObject(hCompatibleDC, hBitmap); 
+	GetObject(hBitmap, sizeof(bitmap), &bitmap); 
+	SelectObject(hCompatibleDC, GetStockObject(DC_BRUSH)); 
+	SetDCBrushColor(hCompatibleDC, RGB(255, 0, 255)); 
 	if (!BitBlt(hCompatibleDC, 0, 0, bitmap.bmWidth, bitmap.bmHeight, hCompatibleDC, 0, 0, MERGECOPY))
 	{
 		return 1;
 	}
 	saveBitmap(hCompatibleDC, hBitmap, bitmap.bmWidth, bitmap.bmHeight);
-	InvalidateRect(hWnd, NULL, TRUE); /* Set rectangle for redraw window */
-	DeleteDC(hCompatibleDC); /* Delete compatible contex */
+	InvalidateRect(hWnd, NULL, TRUE); 
+	DeleteDC(hCompatibleDC); 
 	return 0;
 }
 
@@ -313,11 +298,9 @@ int saveBitmap(HDC hdc, HBITMAP H, int width, int height)
 	WriteFile(hFile, (LPSTR)&bi, sizeof(BITMAPINFOHEADER), &dwBytesWritten, NULL);
 	WriteFile(hFile, (LPSTR)lpbitmap, dwBmpSize, &dwBytesWritten, NULL);
 
-	//Unlock and Free the DIB from the heap
 	GlobalUnlock(hDIB);
 	GlobalFree(hDIB);
 
-	//Close the handle for the file that was created
 	CloseHandle(hFile);
 
 	return 0;
