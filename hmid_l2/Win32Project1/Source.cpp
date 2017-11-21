@@ -1,47 +1,27 @@
-﻿#include <windows.h>
+﻿/**
+	Source.cpp
+	Purpose: Changes bmp file
+
+	@author Rayla Martin
+	@version 1.0 10.11.2017
+*/
+
+#include <windows.h>
 #include <time.h>
 #include <stdio.h>
 #include <iostream> 
 #include <fstream>
 #include "resource.h"
 #include <Commdlg.h>
-#include <io.h>
-#include <fcntl.h>
 #include <winuser.h>
-#include <debugapi.h>
 
-#define OPEN_ID	1
-#define RUN_BITBLT_ID	2
-#define RUN_SETPIXEL_ID	3
-#define RUN_TESTS_ID 4
-#define RUN_MAINTASK_ID 7
-#define COLORREF2RGB(Color) (Color & 0xff00) | ((Color >> 16) & 0xff) \
-                                 | ((Color << 16) & 0xff0000)
-HBITMAP BlitReplaceColor(HBITMAP hBmp, COLORREF cOldColor, COLORREF cNewColor, HDC hBmpDC);
-
-LPCTSTR getFileName();
-int saveBitmap(HDC hdc, HBITMAP bm, int width, int height);
-LRESULT CALLBACK handleWindowEvents(HWND, UINT, WPARAM, LPARAM);
-BOOL CALLBACK AboutDlgProc(HWND hDlg, UINT iMsg, WPARAM wParam, LPARAM lParam);
-int runBitBltFilter(HWND hWnd, HBITMAP hBitmap);
-void runSetPixelFilter(HWND hwnd, HBITMAP hBitmap);
-void runTests(HWND hwnd); 
-void applyDoubleBlueChannel(HWND hwnd, HBITMAP hBitmap);
-HBITMAP ReplaceColor(HBITMAP hBmp, COLORREF cOldColor, COLORREF cNewColor, HDC hBmpDC);
-void runReplaceColorTask(HWND hWnd, HBITMAP hBitmap);
-void transformBitmap(HWND hWnd, HBITMAP hBitmap);
-
-
-
-bool isLoaded = false;
-HBITMAP hBitmap;
-
+///	This method is used as application entry point
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdParam, int nCmdShow)
 {
 	HWND hWnd;
 	WNDCLASS WndClass;
 	MSG Msg;
-	wchar_t szClassName[] = L"Лабораторная работа №1";
+	wchar_t szClassName[] = L"Лабораторная работа №2";
 
 	// Set window attributes
 	WndClass.style = CS_HREDRAW | CS_VREDRAW;
@@ -63,7 +43,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdPa
 	}
 
 	// Create window
-	hWnd = CreateWindow(szClassName, L"Лабораторная работа №1",
+	hWnd = CreateWindow(szClassName, L"Лабораторная работа №2",
 						WS_OVERLAPPEDWINDOW, CW_USEDEFAULT,
 						CW_USEDEFAULT, CW_USEDEFAULT,
 						CW_USEDEFAULT, NULL, NULL,
@@ -72,9 +52,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdPa
 	HMENU MainMenu = CreateMenu();
 	AppendMenu(MainMenu, MF_STRING, OPEN_ID, L"Open");
 	AppendMenu(MainMenu, MF_STRING, RUN_MAINTASK_ID, L"Apply");
-	AppendMenu(MainMenu, MF_STRING, RUN_BITBLT_ID, L"Change");
-	AppendMenu(MainMenu, MF_STRING, RUN_SETPIXEL_ID, L"SetPixel");
-	AppendMenu(MainMenu, MF_STRING, RUN_TESTS_ID, L"Tests");
 	AppendMenu(MainMenu, MF_STRING, IDM_ABOUT, L"About");
 
 	SetMenu(hWnd, MainMenu);
@@ -97,6 +74,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdPa
 	return Msg.wParam;
 }
 
+/// This method is used for handle messages in the queue
 LRESULT CALLBACK handleWindowEvents(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	static HINSTANCE hInstance;
@@ -150,40 +128,14 @@ LRESULT CALLBACK handleWindowEvents(HWND hwnd, UINT message, WPARAM wParam, LPAR
 					isLoaded = true;
 				}
 
-				if (LOWORD(wParam) == RUN_BITBLT_ID)
-				{
-					if (!isLoaded)
-					{
-						break;
-					}
-					if (runBitBltFilter(hwnd, hBitmap) == 1) // if error
-					{
-						break;
-					}
-				}
-
 				if (LOWORD(wParam) == RUN_MAINTASK_ID)
 				{
 					if (!isLoaded)
 					{
 						break;
 					}
-					
+
 					runReplaceColorTask(hwnd, hBitmap);
-				}
-
-				if (LOWORD(wParam) == RUN_SETPIXEL_ID)
-				{
-					if (!isLoaded)
-					{
-						break;
-					}
-					runSetPixelFilter(hwnd, hBitmap);
-				}
-
-				if (LOWORD(wParam) == RUN_TESTS_ID)
-				{
-					runTests(hwnd);
 				}
 
 				break;
@@ -196,6 +148,7 @@ LRESULT CALLBACK handleWindowEvents(HWND hwnd, UINT message, WPARAM wParam, LPAR
 	return 0;
 }
 
+/// This method is used for display information about author.
 BOOL CALLBACK AboutDlgProc(HWND hDlg, UINT iMsg, WPARAM wParam, LPARAM lParam)
 {
 	switch (iMsg)
@@ -234,333 +187,82 @@ BOOL CALLBACK AboutDlgProc(HWND hDlg, UINT iMsg, WPARAM wParam, LPARAM lParam)
 void runReplaceColorTask(HWND hWnd, HBITMAP hBitmap)
 {
 	BITMAP bitmap;
-	HDC hCompatibleDC = CreateCompatibleDC(NULL); /* Create Device_Context compatible with current window */
-	SelectObject(hCompatibleDC, hBitmap); /* Select hBitmap in hCompatibleDC context */
-	GetObject(hBitmap, sizeof(bitmap), &bitmap); /* Get BITMAP size */
+	PAINTSTRUCT paintstruct;
+	static bmpSize_t bmpRenderSize;
+	bmpRenderSize.width =
+		bmpRenderSize.height = 400;
+	auto deviceContext = BeginPaint(hWnd, &paintstruct);
+	auto tmpContext = CreateCompatibleDC(deviceContext);
+	auto oldBitmap = SelectObject(tmpContext, hBitmap);
 
-	HBITMAP hBmp = BlitReplaceColor(hBitmap, 0xFF0000, 0x00ff00, hCompatibleDC); // replace blue by green
-	
-	saveBitmap(hCompatibleDC, hBmp, bitmap.bmWidth, bitmap.bmHeight);
-	InvalidateRect(hWnd, NULL, TRUE); /* Set rectangle for redraw window */
-	DeleteObject(hBmp);
-
-	DeleteDC(hCompatibleDC); /* Delete compatible contex */
-}
-
-int runBitBltFilter(HWND hWnd, HBITMAP hBitmap)
-{
-
-	BITMAP bitmap;
-	HDC hCompatibleDC = CreateCompatibleDC(NULL); /* Create Device_Context compatible with current window */
-	SelectObject(hCompatibleDC, hBitmap); /* Select hBitmap in hCompatibleDC context */
-	GetObject(hBitmap, sizeof(bitmap), &bitmap); /* Get BITMAP size */
-	SelectObject(hCompatibleDC, GetStockObject(DC_BRUSH)); /* Select DC_BRUSH in hCompatibleDC context */
-	SetDCBrushColor(hCompatibleDC, RGB(255, 0, 255)); /* Set in current brush context color(255,0,255) */
-	if (!BitBlt(hCompatibleDC, 0, 0, bitmap.bmWidth, bitmap.bmHeight, hCompatibleDC, 0, 0, MERGECOPY))
-	{
-		return 1;
-	}
-	saveBitmap(hCompatibleDC, hBitmap, bitmap.bmWidth, bitmap.bmHeight);
-	InvalidateRect(hWnd, NULL, TRUE); /* Set rectangle for redraw window */
-	DeleteDC(hCompatibleDC); /* Delete compatible contex */
-	return 0;
-}
-
-void runSetPixelFilter(HWND hwnd, HBITMAP hBitmap)
-{
-
-	BITMAP bitmap;
 	GetObject(hBitmap, sizeof(bitmap), &bitmap);
-	HDC hCompatibleDC = CreateCompatibleDC(NULL);
-	SelectObject(hCompatibleDC, hBitmap);
-	for (int i = 0; i < bitmap.bmWidth; i++)
-	{
-		for (int j = 0; j < bitmap.bmHeight; j++)
-		{
-			SetPixel(hCompatibleDC, i, j, GetPixel(hCompatibleDC, i, j) & 0xFF00FF);
-		}
-	}
-	saveBitmap(hCompatibleDC, hBitmap, bitmap.bmWidth, bitmap.bmHeight);
-	InvalidateRect(hwnd, NULL, TRUE);
-	DeleteDC(hCompatibleDC);
-}
-HBITMAP BlitReplaceColor(HBITMAP hBmp, COLORREF cOldColor, COLORREF cNewColor, HDC hBmpDC)
-{
-	HBITMAP RetBmp = NULL;
-	if (hBmp)
-	{
-		HDC BufferDC = CreateCompatibleDC(NULL);	// DC for Source Bitmap
-		if (BufferDC)
-		{
-			HBITMAP hTmpBitmap = (HBITMAP)NULL;
-			if (hBmpDC)
-				if (hBmp == (HBITMAP)GetCurrentObject(hBmpDC, OBJ_BITMAP))
-				{
-					hTmpBitmap = CreateBitmap(1, 1, 1, 1, NULL);
-					SelectObject(hBmpDC, hTmpBitmap);
-				}
-			HGDIOBJ PreviousBufferObject = SelectObject(BufferDC, hBmp);
-			// here BufferDC contains the bitmap
 
-			HDC DirectDC = CreateCompatibleDC(NULL);	// DC for working		
-			if (DirectDC)
-			{
-				HDC MaskDC = CreateCompatibleDC(NULL);	// DC for mask
-				if (MaskDC)
-				{
-					// Get bitmap size
-					BITMAP bm;
-					GetObject(hBmp, sizeof(bm), &bm);
+	//render source image
 
-					// create a BITMAPINFO with minimal initilisation for the CreateDIBSection
-					BITMAPINFO RGB32BitsBITMAPINFO;
-					ZeroMemory(&RGB32BitsBITMAPINFO, sizeof(BITMAPINFO));
-					RGB32BitsBITMAPINFO.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-					RGB32BitsBITMAPINFO.bmiHeader.biWidth = bm.bmWidth;
-					RGB32BitsBITMAPINFO.bmiHeader.biHeight = bm.bmHeight;
-					RGB32BitsBITMAPINFO.bmiHeader.biPlanes = 1;
-					RGB32BitsBITMAPINFO.bmiHeader.biBitCount = 32;
-					RECT tmprect = { 0,0,bm.bmWidth,bm.bmHeight };
+	StretchBlt(
+		deviceContext, 0, 0, bmpRenderSize.width, bmpRenderSize.height,
+		tmpContext, 0, 0, bitmap.bmWidth, bitmap.bmHeight,
+		SRCCOPY
+	);
 
-					HBITMAP bitmapTrans = CreateBitmap(bm.bmWidth, bm.bmHeight, 1, 1, NULL);
-					DeleteObject(SelectObject(MaskDC, bitmapTrans));
+	changeBMPColors(tmpContext, hBitmap, bitmap);
 
-					SetBkColor(BufferDC, cOldColor);
-					RetBmp = CreateBitmap(bm.bmWidth, bm.bmHeight, 1, 32, NULL);
-					HGDIOBJ PreviousObject = SelectObject(DirectDC, RetBmp);
-					HBRUSH sb = CreateSolidBrush(cNewColor);
-					FillRect(DirectDC, &tmprect, sb);
-					DeleteObject(sb);
+	StretchBlt(
+		deviceContext, bmpRenderSize.width, 0, bmpRenderSize.width,
+		bmpRenderSize.height,
+		tmpContext, 0, 0, bitmap.bmWidth, bitmap.bmHeight,
+		SRCCOPY
+	);
 
-					BitBlt(MaskDC, 0, 0, bm.bmWidth, bm.bmHeight, BufferDC, 0, 0, SRCCOPY);
-					BitBlt(DirectDC, 0, 0, bm.bmWidth, bm.bmHeight, BufferDC, 0, 0, SRCINVERT);
-					BitBlt(DirectDC, 0, 0, bm.bmWidth, bm.bmHeight, MaskDC, 0, 0, SRCAND);
-					BitBlt(DirectDC, 0, 0, bm.bmWidth, bm.bmHeight, BufferDC, 0, 0, SRCINVERT);
-
-					DeleteObject(PreviousObject);
-					DeleteObject(bitmapTrans);
-					DeleteDC(MaskDC);
-				}
-				// clean up
-				DeleteDC(DirectDC);
-			}
-			// BufferDC is now useless
-			if (hTmpBitmap)
-			{
-				SelectObject(hBmpDC, hBmp);
-				DeleteObject(hTmpBitmap);
-			}
-			SelectObject(BufferDC, PreviousBufferObject);
-			DeleteDC(BufferDC);
-		}
-	}
-	return RetBmp;
-}
-HBITMAP ReplaceColor(HBITMAP hBmp, COLORREF cOldColor, COLORREF cNewColor, HDC hBmpDC)
-{
-	HBITMAP RetBmp = NULL;
-	if (hBmp)
-	{
-		HDC BufferDC = CreateCompatibleDC(NULL);    // DC for Source Bitmap
-		if (BufferDC)
-		{
-			HBITMAP hTmpBitmap = (HBITMAP)NULL;
-			if (hBmpDC)
-				if (hBmp == (HBITMAP)GetCurrentObject(hBmpDC, OBJ_BITMAP))
-				{
-					hTmpBitmap = CreateBitmap(1, 1, 1, 1, NULL);
-					SelectObject(hBmpDC, hTmpBitmap);
-				}
-
-			HGDIOBJ PreviousBufferObject = SelectObject(BufferDC, hBmp);
-			// here BufferDC contains the bitmap
-
-			HDC DirectDC = CreateCompatibleDC(NULL); // DC for working
-			if (DirectDC)
-			{
-				// Get bitmap size
-				BITMAP bm;
-				GetObject(hBmp, sizeof(bm), &bm);
-
-				WORD cClrBits = (WORD)(bm.bmPlanes * bm.bmBitsPixel);
-				DWORD biSizeImage = ((bm.bmWidth * cClrBits + 31) & ~31) / 8 * bm.bmHeight;
-
-				// create a BITMAPINFO with minimal initilisation 
-				// for the CreateDIBSection
-				BITMAPINFO RGB32BitsBITMAPINFO;
-				ZeroMemory(&RGB32BitsBITMAPINFO, sizeof(BITMAPINFO));
-				RGB32BitsBITMAPINFO.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-				RGB32BitsBITMAPINFO.bmiHeader.biWidth = bm.bmWidth;
-				RGB32BitsBITMAPINFO.bmiHeader.biHeight = bm.bmHeight;
-				RGB32BitsBITMAPINFO.bmiHeader.biPlanes = 1;
-				RGB32BitsBITMAPINFO.bmiHeader.biBitCount = 32;
-
-				// pointer used for direct Bitmap pixels access
-				ULONGLONG * ptPixels;
-
-				HBITMAP DirectBitmap = CreateDIBSection(DirectDC,
-					(BITMAPINFO *)&RGB32BitsBITMAPINFO,
-														DIB_RGB_COLORS,
-														(void **)&ptPixels,
-														NULL, 0);
-				if (DirectBitmap)
-				{
-					// here DirectBitmap!=NULL so ptPixels!=NULL no need to test
-					HGDIOBJ PreviousObject = SelectObject(DirectDC, DirectBitmap);
-					BitBlt(DirectDC, 0, 0,
-						   bm.bmWidth, bm.bmHeight,
-						   BufferDC, 0, 0, SRCCOPY);
-
-					// here the DirectDC contains the bitmap
-
-					// Convert COLORREF to RGB (Invert RED and BLUE)
-					cOldColor = COLORREF2RGB(cOldColor);
-					cNewColor = COLORREF2RGB(cNewColor);
-
-					// After all the inits we can do the job : Replace Color
-					for (long long i = ((bm.bmWidth*bm.bmHeight) - 1); i >= 0; i--)
-					{
-						if (ptPixels[i] == cOldColor) ptPixels[i] = cNewColor;
-					}
-					// little clean up
-					// Don't delete the result of SelectObject because it's 
-					// our modified bitmap (DirectBitmap)
-					SelectObject(DirectDC, PreviousObject);
-
-					// finish
-					RetBmp = DirectBitmap;
-				}
-				// clean up
-				DeleteDC(DirectDC);
-			}
-			if (hTmpBitmap)
-			{
-				SelectObject(hBmpDC, hBmp);
-				DeleteObject(hTmpBitmap);
-			}
-			SelectObject(BufferDC, PreviousBufferObject);
-			// BufferDC is now useless
-			DeleteDC(BufferDC);
-		}
-	}
-	return RetBmp;
-}
-
-void transformBitmap(HWND hWnd, HBITMAP hBitmap)
-{
-	BITMAP bm;
-	HDC hdc;
-	GetObject(hBitmap, sizeof(BITMAP), &bm);
-
-	BITMAPINFOHEADER   bi;
-
-	bi.biSize = sizeof(BITMAPINFOHEADER);
-	bi.biWidth = bm.bmWidth;
-	bi.biHeight = bm.bmHeight;
-	bi.biPlanes = 1;
-	bi.biBitCount = 32;
-	bi.biCompression = BI_RGB;
-	bi.biSizeImage = 0;
-	bi.biXPelsPerMeter = 0;
-	bi.biYPelsPerMeter = 0;
-	bi.biClrUsed = 0;
-	bi.biClrImportant = 0;
-
-	DWORD dwBmpSize = ((bm.bmWidth * bi.biBitCount + 31) / 32) * 4 * bm.bmHeight;
-
-	HANDLE hDIB = GlobalAlloc(GHND, dwBmpSize);
-	unsigned char *lpbitmapBlue  = (unsigned char *)GlobalLock(hDIB);
-	unsigned char *lpbitmapGreen = (unsigned char *)GlobalLock(hDIB);
-	unsigned char *lpbitmapRed = (unsigned char *)GlobalLock(hDIB);
-
-	hdc = GetDC(hWnd);
-	GetDIBits(hdc, hBitmap, 0,
-		(UINT)bm.bmHeight,
-			  lpbitmapBlue ,
-			  (BITMAPINFO *)&bi, DIB_RGB_COLORS);
-	GetDIBits(hdc, hBitmap, 0,
-		(UINT)bm.bmHeight,
-			  lpbitmapGreen,
-			  (BITMAPINFO *)&bi, DIB_RGB_COLORS);
-	GetDIBits(hdc, hBitmap, 0,
-		(UINT)bm.bmHeight,
-			  lpbitmapRed,
-			  (BITMAPINFO *)&bi, DIB_RGB_COLORS);
-
-	auto oldPointer = lpbitmapBlue ;
-	auto oldPointer2 = lpbitmapGreen;
-	//lpbitmap += (0 - access to blue, 1 - to green, 2 - to red)
-	lpbitmapBlue  += 0; //(0 - access to blue, 1 - to green, 2 - to red)
-	lpbitmapGreen += 2; // access to green
-	lpbitmapRed += 2;
-
-	for (DWORD i = 0; i<dwBmpSize; i += 4)
-	{
-		// изменяем синий на зеленый
-		*lpbitmapGreen = *lpbitmapBlue;
-		
-		lpbitmapBlue  += 4;
-		lpbitmapGreen += 4;
-	}
-
-	SetDIBits(hdc, hBitmap, 0,
-		(UINT)bm.bmHeight,
-			  oldPointer,
-			  (BITMAPINFO *)&bi, DIB_RGB_COLORS);
-
-	saveBitmap(hdc, hBitmap, bm.bmWidth, bm.bmHeight);
-
-	GlobalUnlock(hDIB);
-	GlobalFree(hDIB);
-	ReleaseDC(hWnd, hdc);
+	HBITMAP imageToSave = (HBITMAP)SelectObject(tmpContext, oldBitmap);
+	saveBitmap(tmpContext, imageToSave, bitmap.bmWidth, bitmap.bmHeight);
+	
 	InvalidateRect(hWnd, NULL, TRUE);
+	DeleteDC(tmpContext);
+	EndPaint(hWnd, &paintstruct);
 }
 
-void applyDoubleBlueChannel(HWND hwnd, HBITMAP hBitmap)
+static void changeBMPColors(HDC deviceCtx, HBITMAP bmpImage, BITMAP bmpInfo)
 {
-	BITMAP bmp;
-	GetObject(hBitmap, sizeof(BITMAP), &bmp);
-	HDC hDCMem = CreateCompatibleDC(NULL);
-	HGDIOBJ oldBitmap = SelectObject(hDCMem, hBitmap);
-	WORD cClrBits = (WORD)(bmp.bmPlanes * bmp.bmBitsPixel);
-	DWORD biSizeImage = ((bmp.bmWidth * cClrBits + 31) & ~31) / 8 * bmp.bmHeight;
-	BITMAPINFO bmi = { 0 };
-
-	bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-	bmi.bmiHeader.biWidth = bmp.bmWidth;
-	bmi.bmiHeader.biHeight = bmp.bmHeight;
-	bmi.bmiHeader.biPlanes = bmp.bmPlanes;
-	bmi.bmiHeader.biBitCount = bmp.bmBitsPixel;
-	bmi.bmiHeader.biCompression = BI_RGB;
-	bmi.bmiHeader.biSizeImage = biSizeImage;
-	bmi.bmiHeader.biClrImportant = 0;
-
-	LPBYTE lpBits = (LPBYTE)GlobalAlloc(GMEM_FIXED, biSizeImage); // memory pointer
-	GetDIBits(hDCMem, hBitmap, 0, bmp.bmHeight, lpBits, &bmi, DIB_RGB_COLORS);
-	WORD buf;
-
-	COLORREF cOldColor = COLORREF2RGB(0x0000FF);
-	COLORREF cNewColor = COLORREF2RGB(0x00ff00);
-
-	for (long i = 0; i < bmp.bmWidth * bmp.bmHeight * 3; i += 3)
+	char const PIXEL_SIZE = sizeof(int32_t);
+	BITMAPINFO bi;
+	auto imgHeight = bmpInfo.bmHeight;
+	auto imgWidth = bmpInfo.bmWidth;
+	char* buf = new char[imgHeight * imgWidth * PIXEL_SIZE];
+	
+	bi.bmiHeader.biSize = sizeof(bi.bmiHeader);
+	bi.bmiHeader.biWidth = imgWidth;
+	bi.bmiHeader.biHeight = imgHeight;
+	bi.bmiHeader.biPlanes = 1;
+	bi.bmiHeader.biBitCount = PIXEL_SIZE * 8;
+	bi.bmiHeader.biCompression = BI_RGB;
+	bi.bmiHeader.biSizeImage = imgWidth * PIXEL_SIZE * imgHeight;
+	bi.bmiHeader.biClrUsed = 0;
+	bi.bmiHeader.biClrImportant = 0;
+	
+	int bRes = GetDIBits(
+		deviceCtx, bmpImage, 0, bmpInfo.bmHeight, buf, &bi, DIB_RGB_COLORS
+	);
+	
+	long bufSize = imgHeight * imgWidth * PIXEL_SIZE;
+	
+	for (auto i = 0; i < bufSize; i += PIXEL_SIZE)
 	{
-		if (lpBits[i] == cOldColor)
-		{
-			lpBits[i] = cNewColor;
-		}
+		auto blue = buf[i];
+		auto green = buf[i + 1];
+		auto red = buf[i + 2];
+
+		buf[i] = red; // blue - red; R->B
+		buf[i + 1] = blue;  // green - blue; B->G
+		buf[i + 2] = green;	// red - green; G->R
+		
 	}
-
-	SetDIBits(hDCMem, hBitmap, 0, bmp.bmHeight, lpBits, &bmi, DIB_RGB_COLORS);
-	saveBitmap(hDCMem, hBitmap, bmp.bmWidth, bmp.bmHeight);
-
-	SelectObject(hDCMem, oldBitmap);
-
-	GlobalFree((HGLOBAL)lpBits);
-	DeleteDC(hDCMem);
-	DeleteObject(oldBitmap);
-	InvalidateRect(hwnd, NULL, TRUE);
+	
+	SetDIBits(deviceCtx, bmpImage, 0, bRes, buf, &bi, DIB_RGB_COLORS);
+	delete[] buf;
 }
 
+/// This method just return a file name.
 LPCTSTR getFileName()
 {
 	OPENFILENAME ofn;
@@ -582,6 +284,7 @@ LPCTSTR getFileName()
 	return ofn.lpstrFile;
 }
 
+/// This method just save new bmp file.
 int saveBitmap(HDC hdc, HBITMAP H, int width, int height)
 {
 	BITMAPFILEHEADER   bmfHeader;
@@ -633,59 +336,4 @@ int saveBitmap(HDC hdc, HBITMAP H, int width, int height)
 	CloseHandle(hFile);
 
 	return 0;
-}
-
-void runTests(HWND hwnd)
-{
-	HBITMAP cpy;
-
-	DWORD dwStartTime;
-	DWORD dwElapsed;
-
-	// open console
-	AllocConsole();
-	HANDLE stdHandle;
-	int hConsole;
-	FILE* fp;
-	stdHandle = GetStdHandle(STD_OUTPUT_HANDLE);
-	hConsole = _open_osfhandle((long)stdHandle, _O_TEXT);
-	fp = _fdopen(hConsole, "w");
-	freopen_s(&fp, "CONOUT$", "w", stdout);
-
-	// measure BitBlt
-	printf("BitBlt: \n");
-	for (int i = 1; i <= 10; i++)
-	{
-		cpy = (HBITMAP)CopyImage(hBitmap, IMAGE_BITMAP, i * 200, i * 200, 0);
-
-
-		dwStartTime = GetTickCount();
-
-		runBitBltFilter(hwnd, cpy);
-
-		dwElapsed = GetTickCount() - dwStartTime;
-		printf("[%4d x %4d] = %d.%d sec.\n", (i * 200), (i * 200), dwElapsed / 1000, dwElapsed - dwElapsed / 1000);
-
-		DeleteObject(cpy);
-	}
-	printf("\n");
-
-
-	// measure SetPixel/GetPixel
-	printf("Pixel: \n");
-	for (int i = 1; i <= 10; i++)
-	{
-		cpy = (HBITMAP)CopyImage(hBitmap, IMAGE_BITMAP, i * 200, i * 200, 0);
-
-
-		dwStartTime = GetTickCount();
-
-		runSetPixelFilter(hwnd, cpy);
-
-		dwElapsed = GetTickCount() - dwStartTime;
-		printf("[%4d x %4d] = %d.%d sec.\n", (i * 200), (i * 200), dwElapsed / 1000, dwElapsed - dwElapsed / 1000);
-
-		DeleteObject(cpy);
-	}
-	printf("\nDone!");
 }

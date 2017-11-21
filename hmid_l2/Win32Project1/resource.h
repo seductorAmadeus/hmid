@@ -14,3 +14,21 @@
 
 #endif
 #define IDM_ABOUT 12
+#define OPEN_ID	1
+#define RUN_MAINTASK_ID 7
+
+typedef struct bmpSize
+{
+	long width;
+	long height;
+} bmpSize_t;
+
+LPCTSTR getFileName();
+int saveBitmap(HDC hdc, HBITMAP bm, int width, int height);
+LRESULT CALLBACK handleWindowEvents(HWND, UINT, WPARAM, LPARAM);
+BOOL CALLBACK AboutDlgProc(HWND hDlg, UINT iMsg, WPARAM wParam, LPARAM lParam);
+void runReplaceColorTask(HWND hWnd, HBITMAP hBitmap);
+static void someMagic(HDC deviceCtx, HBITMAP bmpImage, BITMAP bmpInfo);
+
+bool isLoaded = false;
+HBITMAP hBitmap;
