@@ -1,4 +1,12 @@
-﻿#include <windows.h>
+﻿/**
+	Source.cpp
+	Purpose: Changes bmp file
+
+	@author Rayla Martin
+	@version 1.0 15.10.2017
+*/
+
+#include <windows.h>
 #include <time.h>
 #include <stdio.h>
 #include <iostream> 
@@ -8,9 +16,16 @@
 #include <io.h>
 #include <fcntl.h>
 #include <winuser.h>
-#include <debugapi.h>
 
+/**
+	This method is used as application entry point
 
+	@param hInstance is something called a "handle to an instance".
+	@param hPrevInstance has no meaning. It was used in 16-bit Windows, but is now always zero.
+	@param lpszCmdParam contains the command-line arguments as a Unicode string.
+	@param nCmdShow  is a flag that says whether the main application window will be minimized, maximized, or shown normally.
+	@return an int value; I can use it to convey a status code to some other program that i write.
+*/
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdParam, int nCmdShow)
 {
 	HWND hWnd;
@@ -71,6 +86,16 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdPa
 	return Msg.wParam;
 }
 
+
+/**
+	This method is used for handle messages in the queue
+
+	@param hInstance is something called a "handle to an instance".
+	@param hPrevInstance has no meaning. It was used in 16-bit Windows, but is now always zero.
+	@param lpszCmdParam contains the command-line arguments as a Unicode string.
+	@param nCmdShow  is a flag that says whether the main application window will be minimized, maximized, or shown normally.
+	@return an int value; I can use it to convey a status code to some other program that i write.
+*/
 LRESULT CALLBACK handleWindowEvents(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	static HINSTANCE hInstance;
@@ -160,6 +185,7 @@ LRESULT CALLBACK handleWindowEvents(HWND hwnd, UINT message, WPARAM wParam, LPAR
 	return 0;
 }
 
+/// This method is used for display information about author.
 BOOL CALLBACK AboutDlgProc(HWND hDlg, UINT iMsg, WPARAM wParam, LPARAM lParam)
 {
 	switch (iMsg)
@@ -194,25 +220,30 @@ BOOL CALLBACK AboutDlgProc(HWND hDlg, UINT iMsg, WPARAM wParam, LPARAM lParam)
 	}
 	return FALSE;
 }
+
+/// This method is used for increase the intensity of red and blue colors.
+/// For this, the BitBlt function is used
 int runBitBltFilter(HWND hWnd, HBITMAP hBitmap)
 {
 
 	BITMAP bitmap;
-	HDC hCompatibleDC = CreateCompatibleDC(NULL); 
-	SelectObject(hCompatibleDC, hBitmap); 
-	GetObject(hBitmap, sizeof(bitmap), &bitmap); 
-	SelectObject(hCompatibleDC, GetStockObject(DC_BRUSH)); 
-	SetDCBrushColor(hCompatibleDC, RGB(255, 0, 255)); 
+	HDC hCompatibleDC = CreateCompatibleDC(NULL);
+	SelectObject(hCompatibleDC, hBitmap);
+	GetObject(hBitmap, sizeof(bitmap), &bitmap);
+	SelectObject(hCompatibleDC, GetStockObject(DC_BRUSH));
+	SetDCBrushColor(hCompatibleDC, RGB(255, 0, 255));
 	if (!BitBlt(hCompatibleDC, 0, 0, bitmap.bmWidth, bitmap.bmHeight, hCompatibleDC, 0, 0, MERGECOPY))
 	{
 		return 1;
 	}
 	saveBitmap(hCompatibleDC, hBitmap, bitmap.bmWidth, bitmap.bmHeight);
-	InvalidateRect(hWnd, NULL, TRUE); 
-	DeleteDC(hCompatibleDC); 
+	InvalidateRect(hWnd, NULL, TRUE);
+	DeleteDC(hCompatibleDC);
 	return 0;
 }
 
+/// This method is used for increase the intensity of red and blue colors.
+/// For this, the GetPixel and SetPixel function's are used.
 void runSetPixelFilter(HWND hwnd, HBITMAP hBitmap)
 {
 
@@ -232,6 +263,7 @@ void runSetPixelFilter(HWND hwnd, HBITMAP hBitmap)
 	DeleteDC(hCompatibleDC);
 }
 
+/// This method just return a file name.
 LPCTSTR getFileName()
 {
 	OPENFILENAME ofn;
@@ -253,6 +285,7 @@ LPCTSTR getFileName()
 	return ofn.lpstrFile;
 }
 
+/// This method just save new bmp file.
 int saveBitmap(HDC hdc, HBITMAP H, int width, int height)
 {
 	BITMAPFILEHEADER   bmfHeader;
@@ -306,6 +339,7 @@ int saveBitmap(HDC hdc, HBITMAP H, int width, int height)
 	return 0;
 }
 
+/// This method just run tests.
 void runTests(HWND hwnd)
 {
 	HBITMAP cpy;
