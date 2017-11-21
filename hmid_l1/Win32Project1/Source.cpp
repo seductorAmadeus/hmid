@@ -17,15 +17,8 @@
 #include <fcntl.h>
 #include <winuser.h>
 
-/**
-	This method is used as application entry point
 
-	@param hInstance is something called a "handle to an instance".
-	@param hPrevInstance has no meaning. It was used in 16-bit Windows, but is now always zero.
-	@param lpszCmdParam contains the command-line arguments as a Unicode string.
-	@param nCmdShow  is a flag that says whether the main application window will be minimized, maximized, or shown normally.
-	@return an int value; I can use it to convey a status code to some other program that i write.
-*/
+///	This method is used as application entry point
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdParam, int nCmdShow)
 {
 	HWND hWnd;
@@ -86,16 +79,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdPa
 	return Msg.wParam;
 }
 
-
-/**
-	This method is used for handle messages in the queue
-
-	@param hInstance is something called a "handle to an instance".
-	@param hPrevInstance has no meaning. It was used in 16-bit Windows, but is now always zero.
-	@param lpszCmdParam contains the command-line arguments as a Unicode string.
-	@param nCmdShow  is a flag that says whether the main application window will be minimized, maximized, or shown normally.
-	@return an int value; I can use it to convey a status code to some other program that i write.
-*/
+/// This method is used for handle messages in the queue
 LRESULT CALLBACK handleWindowEvents(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	static HINSTANCE hInstance;
