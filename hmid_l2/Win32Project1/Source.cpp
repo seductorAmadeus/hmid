@@ -125,12 +125,12 @@ LRESULT CALLBACK handleWindowEvents(HWND hwnd, UINT message, WPARAM wParam, LPAR
 					LPCTSTR fileName = getFileName();
 					hBitmap = (HBITMAP)LoadImage(0, fileName, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
 					InvalidateRect(hwnd, NULL, TRUE);
-					isLoaded = true;
+					if_is_loaded = true;
 				}
 
 				if (LOWORD(wParam) == RUN_MAINTASK_ID)
 				{
-					if (!isLoaded)
+					if (!if_is_loaded)
 					{
 						break;
 					}
@@ -197,8 +197,6 @@ void runReplaceColorTask(HWND hWnd, HBITMAP hBitmap)
 
 	GetObject(hBitmap, sizeof(bitmap), &bitmap);
 
-	//render source image
-
 	StretchBlt(
 		deviceContext, 0, 0, bmpRenderSize.width, bmpRenderSize.height,
 		tmpContext, 0, 0, bitmap.bmWidth, bitmap.bmHeight,
@@ -224,29 +222,31 @@ void runReplaceColorTask(HWND hWnd, HBITMAP hBitmap)
 
 static void changeBMPColors(HDC deviceCtx, HBITMAP bmpImage, BITMAP bmpInfo)
 {
-	char const PIXEL_SIZE = sizeof(int32_t);
+	char const sizeOfPixels = sizeof(int32_t);
 	BITMAPINFO bi;
 	auto imgHeight = bmpInfo.bmHeight;
 	auto imgWidth = bmpInfo.bmWidth;
-	char* buf = new char[imgHeight * imgWidth * PIXEL_SIZE];
+	char* buf = new char[imgHeight * imgWidth * sizeOfPixels];
 	
 	bi.bmiHeader.biSize = sizeof(bi.bmiHeader);
 	bi.bmiHeader.biWidth = imgWidth;
 	bi.bmiHeader.biHeight = imgHeight;
 	bi.bmiHeader.biPlanes = 1;
-	bi.bmiHeader.biBitCount = PIXEL_SIZE * 8;
+	bi.bmiHeader.biBitCount = sizeOfPixels * 8;
 	bi.bmiHeader.biCompression = BI_RGB;
-	bi.bmiHeader.biSizeImage = imgWidth * PIXEL_SIZE * imgHeight;
+	bi.bmiHeader.biSizeImage = imgWidth * sizeOfPixels * imgHeight;
 	bi.bmiHeader.biClrUsed = 0;
 	bi.bmiHeader.biClrImportant = 0;
 	
+	// retrieves the bits of the specified compatible bitmap and copies them into a buffer as a DIB using the specified format.
+	// bRes - is the number of scan lines copied from the bitmap.
 	int bRes = GetDIBits(
 		deviceCtx, bmpImage, 0, bmpInfo.bmHeight, buf, &bi, DIB_RGB_COLORS
 	);
 	
-	long bufSize = imgHeight * imgWidth * PIXEL_SIZE;
+	long bufSize = imgHeight * imgWidth * sizeOfPixels;
 	
-	for (auto i = 0; i < bufSize; i += PIXEL_SIZE)
+	for (auto i = 0; i < bufSize; i += sizeOfPixels)
 	{
 		auto blue = buf[i];
 		auto green = buf[i + 1];
@@ -255,10 +255,10 @@ static void changeBMPColors(HDC deviceCtx, HBITMAP bmpImage, BITMAP bmpInfo)
 		buf[i] = red; // blue - red; R->B
 		buf[i + 1] = blue;  // green - blue; B->G
 		buf[i + 2] = green;	// red - green; G->R
-		
 	}
 	
 	SetDIBits(deviceCtx, bmpImage, 0, bRes, buf, &bi, DIB_RGB_COLORS);
+
 	delete[] buf;
 }
 

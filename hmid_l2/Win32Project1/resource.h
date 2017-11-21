@@ -28,7 +28,7 @@ int saveBitmap(HDC hdc, HBITMAP bm, int width, int height);
 LRESULT CALLBACK handleWindowEvents(HWND, UINT, WPARAM, LPARAM);
 BOOL CALLBACK AboutDlgProc(HWND hDlg, UINT iMsg, WPARAM wParam, LPARAM lParam);
 void runReplaceColorTask(HWND hWnd, HBITMAP hBitmap);
-static void someMagic(HDC deviceCtx, HBITMAP bmpImage, BITMAP bmpInfo);
+static void changeBMPColors(HDC deviceCtx, HBITMAP bmpImage, BITMAP bmpInfo);
 
-bool isLoaded = false;
+bool if_is_loaded = false;
 HBITMAP hBitmap;
