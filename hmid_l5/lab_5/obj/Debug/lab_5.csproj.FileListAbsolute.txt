@@ -1,0 +1,10 @@
+C:\Users\admin\Desktop\human-machine-interfaces-development-master\lab_5_var_1\lab_5_var_1\bin\Debug\lab_5_var_1.exe.config
+C:\Users\admin\Desktop\human-machine-interfaces-development-master\lab_5_var_1\lab_5_var_1\bin\Debug\lab_5_var_1.exe
+C:\Users\admin\Desktop\human-machine-interfaces-development-master\lab_5_var_1\lab_5_var_1\bin\Debug\lab_5_var_1.pdb
+C:\Users\admin\Desktop\human-machine-interfaces-development-master\lab_5_var_1\lab_5_var_1\obj\Debug\lab_5.csprojResolveAssemblyReference.cache
+C:\Users\admin\Desktop\human-machine-interfaces-development-master\lab_5_var_1\lab_5_var_1\obj\Debug\lab_5.Form1.resources
+C:\Users\admin\Desktop\human-machine-interfaces-development-master\lab_5_var_1\lab_5_var_1\obj\Debug\lab_5_var_1.Properties.Resources.resources
+C:\Users\admin\Desktop\human-machine-interfaces-development-master\lab_5_var_1\lab_5_var_1\obj\Debug\lab_5.csproj.GenerateResource.Cache
+C:\Users\admin\Desktop\human-machine-interfaces-development-master\lab_5_var_1\lab_5_var_1\obj\Debug\lab_5.csproj.CoreCompileInputs.cache
+C:\Users\admin\Desktop\human-machine-interfaces-development-master\lab_5_var_1\lab_5_var_1\obj\Debug\lab_5_var_1.exe
+C:\Users\admin\Desktop\human-machine-interfaces-development-master\lab_5_var_1\lab_5_var_1\obj\Debug\lab_5_var_1.pdb
